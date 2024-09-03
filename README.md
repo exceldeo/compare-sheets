@@ -13,16 +13,12 @@ https://youtu.be/4MN33QUkc9Y
     2. Click on the Extensions menu at the top of the Google Sheets interface.
     3. Select Add-ons > Get add-ons.
     4. In the Google Workspace Marketplace, use the search bar to look for "Compare Sheets" and click internal.
-
-![marketplace](./screenshoot/marketplace.png)
-
     5. Click on the Compare Sheets add-on from the search results.
     6. Click the Install button and follow the on-screen instructions to authorize the add-on.
 You may be prompted to authorize the add-on to access your Google Sheets. Click Allow to grant the necessary permissions.
 
 
 ## Usage/Examples
-![usage](./screenshoot/usage.png)
 
     1. In your Google Sheets document, go to Extensions > Compare Sheets > Start.
     2. Select the sheet you want to compare.
