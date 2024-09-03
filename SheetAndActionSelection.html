@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+       body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f4f4f9;
+      }
+      h3 {
+        color: #333;
+      }
+      .checkbox-container label {
+        margin: 5px 0;
+      }
+      select {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+        display: block;
+      }
+      .checkbox-container {
+        max-height: 120px;
+        overflow: scroll;
+        border: 1px solid black;
+        padding: 2px;
+      }
+      .color-display {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        width: calc(100% - 20px);
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        display: block;
+        margin-top:10px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .flex-container {
+        display: flex;
+        margin-bottom: 20px;
+      }
+      .flex-container button {
+        margin-left: 10px
+      }
+      .color-picker-button {
+        flex: 1;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .color-picker-button:hover {
+        background-color: #0056b3;
+      }
+      .input-container {
+        width: calc(100% - 40px);
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+
+      .input-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .input-container input {
+        width: calc(100% - 10px);
+        padding: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+
+      .input-container input[type="number"] {
+        width: calc(100% - 10px);
+      }
+
+      #loading {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        text-align: center;
+        padding-top: 50%;
+        padding-left:10px;
+        color: #fff;
+        font-size: 18px;
+      }
+      #loading button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #ff4d4d;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      #loading button:hover {
+        background-color: #ff1a1a;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Select Sheets to Compare</h3>
+    <div class="checkbox-container" id="sheetsDiv"></div>
+    
+    <h3>Select Main Sheet</h3>
+    <select id="mainSheet"></select>
+
+    <h3>Choose an Action</h3>
+    <select id="action">
+      <option value="highlight">Highlight Differences</option>
+      <option value="summary">Provide Summary</option>
+    </select>
+
+    <h3>Choose Columns</h3>
+    <select id="columnOption" onchange="toggleColumnInputs()">
+      <option value="all">All Columns</option>
+      <option value="range">Range of Columns</option>
+      <option value="specific">Specific Columns</option>
+    </select>
+
+    <div id="rangeInputs" class="input-container row" style="display: none;">
+      <div>
+        <label>Start Column (e.g., A):</label>
+        <input type="text" id="startColumn" pattern="[A-Za-z]+" title="Please enter a valid column letter">
+      </div>
+      <div>
+        <label>End Column (e.g., B):</label>
+        <input type="text" id="endColumn" pattern="[A-Za-z]+" title="Please enter a valid column letter">
+      </div>
+    </div>
+
+    <div id="specificInputs" class="input-container" style="display: none;">
+      <label>Specific Columns (comma-separated, e.g., A,B,C):</label>
+      <input type="text" id="specificColumns" pattern="[A-Za-z, ]+" title="Please enter valid column letters separated by commas">
+    </div>
+
+    <button onclick="submitSelection()">Submit</button>
+    
+    <div id="loading">
+      Processing, please wait...
+    </div>
+
+    <script>
+      let processInProgress = false;
+
+      document.addEventListener('DOMContentLoaded', function() {
+        var sheetNames = <!--SHEET_NAMES-->;
+        var sheetsDiv = document.getElementById('sheetsDiv');
+        var mainSheetSelect = document.getElementById('mainSheet');
+
+        sheetNames.forEach(function(name) {
+          var checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = name;
+          checkbox.value = name;
+          sheetsDiv.appendChild(checkbox);
+          
+          var label = document.createElement('label');
+          label.htmlFor = name;
+          label.appendChild(document.createTextNode(name));
+          sheetsDiv.appendChild(label);
+          
+          sheetsDiv.appendChild(document.createElement('br'));
+        });
+
+        // Update main sheet options when checkboxes are changed
+        sheetsDiv.addEventListener('change', function() {
+          mainSheetSelect.innerHTML = ''; // Clear previous options
+          var checkboxes = document.querySelectorAll('#sheetsDiv input[type="checkbox"]');
+          checkboxes.forEach(function(checkbox) {
+            if (checkbox.checked) {
+              var option = document.createElement('option');
+              option.value = checkbox.value;
+              option.text = checkbox.value;
+              mainSheetSelect.appendChild(option);
+            }
+          });
+        });
+      });
+
+      function toggleColumnInputs() {
+        var columnOption = document.getElementById('columnOption').value;
+        document.getElementById('rangeInputs').style.display = (columnOption === 'range') ? 'block' : 'none';
+        document.getElementById('specificInputs').style.display = (columnOption === 'specific') ? 'block' : 'none';
+      }
+
+      function submitSelection() {
+        if (processInProgress) return;
+
+        var mainSheet = document.getElementById('mainSheet').value;
+        var selectedSheets = [];
+        var checkboxes = document.querySelectorAll('#sheetsDiv input[type="checkbox"]');
+        checkboxes.forEach(function(checkbox) {
+          if (checkbox.checked) {
+            selectedSheets.push(checkbox.value);
+          }
+        });
+        
+        var action = document.getElementById('action').value;
+        var columnOption = document.getElementById('columnOption').value;
+        var startColumn = document.getElementById('startColumn').value;
+        var endColumn = document.getElementById('endColumn').value;
+        var specificColumns = document.getElementById('specificColumns').value;
+
+        // Show the loading indicator and prevent further interaction
+        processInProgress = true;
+        document.getElementById('loading').style.display = 'block';
+
+        google.script.run.withSuccessHandler(function() {
+          // Hide the loading indicator when the process is complete
+          processInProgress = false;
+          document.getElementById('loading').style.display = 'none';
+          google.script.host.close();
+        }).withFailureHandler(function() {
+          // Hide the loading indicator if the process fails
+          processInProgress = false;
+          document.getElementById('loading').style.display = 'none';
+          alert('The process was cancelled or encountered an error.');
+        }).processComparison(mainSheet, selectedSheets, action, columnOption, startColumn, endColumn, specificColumns);
+      }
+
+      function cancelProcess() {
+        if (!processInProgress) return;
+
+        // Here you can implement the logic to cancel the process
+        // This might involve setting a flag that the server-side code checks periodically
+        // For simplicity, we'll just reset the UI in this example
+        processInProgress = false;
+        document.getElementById('loading').style.display = 'none';
+        alert('The process has been cancelled.');
+      }
+    </script>
+  </body>
+</html>
