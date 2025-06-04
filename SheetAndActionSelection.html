@@ -3,16 +3,19 @@
   <head>
     <base target="_top">
     <style>
-       body {
+      body {
         font-family: Arial, sans-serif;
+        font-size: 12px; /* Reduced font size */
         padding: 20px;
         background-color: #f4f4f9;
       }
       h3 {
         color: #333;
+        font-size: 14px; /* Reduced font size */
       }
       .checkbox-container label {
         margin: 5px 0;
+        font-size: 12px; /* Reduced font size */
       }
       select {
         width: calc(100% - 20px);
@@ -22,12 +25,14 @@
         border-radius: 5px;
         background-color: #fff;
         display: block;
+        font-size: 12px; /* Reduced font size */
       }
       .checkbox-container {
         max-height: 120px;
         overflow: scroll;
         border: 1px solid black;
         padding: 2px;
+        font-size: 12px; /* Reduced font size */
       }
       .color-display {
         width: 30px;
@@ -35,19 +40,24 @@
         border: 1px solid #ccc;
         border-radius: 5px;
       }
-      button {
-        width: calc(100% - 20px);
+      .button {
         padding: 10px;
         background-color: #007bff;
         color: #fff;
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 12px; /* Reduced font size */
         display: block;
-        margin-top:10px;
       }
-      button:hover {
+      .button.button-success {
+        background-color: green;
+      }
+      .width-100 {
+        width: 100%;
+      }
+
+      .button:hover {
         background-color: #0056b3;
       }
       .flex-container {
@@ -55,7 +65,7 @@
         margin-bottom: 20px;
       }
       .flex-container button {
-        margin-left: 10px
+        margin-left: 10px;
       }
       .color-picker-button {
         flex: 1;
@@ -65,7 +75,7 @@
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 12px; /* Reduced font size */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -80,12 +90,14 @@
         border: 1px solid #ccc;
         border-radius: 5px;
         background-color: #f9f9f9;
+        font-size: 12px; /* Reduced font size */
       }
 
       .input-container label {
         display: block;
         margin-bottom: 5px;
         font-weight: bold;
+        font-size: 12px; /* Reduced font size */
       }
 
       .input-container input {
@@ -94,6 +106,7 @@
         margin-bottom: 10px;
         border: 1px solid #ccc;
         border-radius: 3px;
+        font-size: 12px; /* Reduced font size */
       }
 
       .input-container input[type="number"] {
@@ -111,9 +124,9 @@
         z-index: 1000;
         text-align: center;
         padding-top: 50%;
-        padding-left:10px;
+        padding-left: 10px;
         color: #fff;
-        font-size: 18px;
+        font-size: 12px; /* Reduced font size */
       }
       #loading button {
         margin-top: 20px;
@@ -123,131 +136,300 @@
         border: none;
         border-radius: 5px;
         cursor: pointer;
+        font-size: 12px; /* Reduced font size */
       }
       #loading button:hover {
         background-color: #ff1a1a;
       }
+      .card {
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+        font-size: 12px; /* Reduced font size */
+      }
+      .card h2 {
+        margin-top: 0;
+      }
+      .button-groups {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        gap: 10px;
+      }
     </style>
   </head>
   <body>
-    <h3>Select Sheets to Compare</h3>
-    <div class="checkbox-container" id="sheetsDiv"></div>
-    
-    <h3>Select Main Sheet</h3>
-    <select id="mainSheet"></select>
-
-    <h3>Choose an Action</h3>
-    <select id="action">
-      <option value="highlight">Highlight Differences</option>
-      <option value="summary">Provide Summary</option>
-    </select>
-
-    <h3>Choose Columns</h3>
-    <select id="columnOption" onchange="toggleColumnInputs()">
-      <option value="all">All Columns</option>
-      <option value="range">Range of Columns</option>
-      <option value="specific">Specific Columns</option>
-    </select>
-
-    <div id="rangeInputs" class="input-container row" style="display: none;">
-      <div>
-        <label>Start Column (e.g., A):</label>
-        <input type="text" id="startColumn" pattern="[A-Za-z]+" title="Please enter a valid column letter">
+    <div class="container">
+      <div style="display: flex; align-items: center; margin-bottom: 20px;">
+      <div style="flex: 1; height: 10px; background-color: #ccc; border-radius: 5px; overflow: hidden;">
+        <div id="progressBar" style="width: 50%; height: 100%; background-color: #007bff;"></div>
       </div>
-      <div>
-        <label>End Column (e.g., B):</label>
-        <input type="text" id="endColumn" pattern="[A-Za-z]+" title="Please enter a valid column letter">
+      <span id="progressText" style="margin-left: 10px; font-weight: bold;">Step 1 of 2</span>
+      </div>
+
+      <div class="card" id="section1">
+        <h2>Data Compare</h2>
+
+        <div id="section2DifferenceSpreadheet">
+          <h3>To compare with a different spreadsheet, please provide the URL:</h3>
+          <div
+          style="display: flex; gap: 10px;"
+          >
+          <input type="text" id="spreadsheetUrl" placeholder="Enter Spread Sheet URL" style="width: calc(100% - 50px); padding: 10px;">
+          <button class="button" onclick="fetchSheets()" style="width:50px">Fetch Data</button>
+          </div>
+          <h3>Select Sheets to Compare (Difference Spread Sheet)</h3>
+          <div class="checkbox-container" id="diffSheetsDiv"></div>
+        </div>
+
+        
+        <h3>Select Sheets to Compare (Spread Sheet Active)</h3>
+        <div class="checkbox-container" id="sheetsDiv"></div>
+        
+        <h3>Select Main Sheet (Spread Sheet Active)</h3>
+        <select id="mainSheet"></select>
+      </div>
+
+      <div class="card" id="section2" style="display: none;">
+        <h2>Choose an Action</h2>
+        <select id="action">
+          <option value="highlight">Highlight Differences</option>
+          <option value="summary">Provide Summary</option>
+        </select>
+      
+        <h3>Choose Columns</h3>
+        <select id="columnOption" onchange="toggleColumnInputs()">
+          <option value="all">All Columns</option>
+          <option value="range">Range of Columns</option>
+          <option value="specific">Specific Columns</option>
+        </select>
+      
+        <div id="rangeInputs" class="input-container row" style="display: none;">
+          <div>
+          <label>Start Column (e.g., A):</label>
+          <input type="text" id="startColumn" pattern="[A-Za-z]+" title="Please enter a valid column letter">
+          </div>
+          <div>
+          <label>End Column (e.g., B):</label>
+          <input type="text" id="endColumn" pattern="[A-Za-z]+" title="Please enter a valid column letter">
+          </div>
+        </div>
+      
+        <div id="specificInputs" class="input-container" style="display: none;">
+          <label>Specific Columns (comma-separated, e.g., A,B,C):</label>
+          <input type="text" id="specificColumns" pattern="[A-Za-z, ]+" title="Please enter valid column letters separated by commas">
+        </div>
+      </div>
+
+      <div class="button-groups">
+      <button class="button width-100" id="backButton" style="color:#0056b3; background-color: white; border: 1px solid #0056b3; display:none;" onclick="updateProgress(-1)">Back</button>
+      <button class="button width-100" id="nextButton" onclick="updateProgress(1)">Next</button>
+      <button class="button width-100" id="submitButton" onclick="submitSelection()" style="color: white; background-color:green; display:none;">Submit</button>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="loading" style="display: none; text-align: center; padding: 10px; margin-top: 10px; background: #f4f4f9; color:black;">
+        Loading, please wait...
       </div>
     </div>
-
-    <div id="specificInputs" class="input-container" style="display: none;">
-      <label>Specific Columns (comma-separated, e.g., A,B,C):</label>
-      <input type="text" id="specificColumns" pattern="[A-Za-z, ]+" title="Please enter valid column letters separated by commas">
-    </div>
-
-    <button onclick="submitSelection()">Submit</button>
     
-    <div id="loading">
-      Processing, please wait...
-    </div>
-
     <script>
+      let statusProgress = 1; // 1 for choose data, 2 for choose action
       let processInProgress = false;
 
+      function changeSection() {
+        if (statusProgress === 1) {
+          document.getElementById('section1').style.display = 'block';
+          document.getElementById('section2').style.display = 'none';
+          document.getElementById('backButton').style.display = 'none';
+          document.getElementById('nextButton').style.display = 'block';
+          document.getElementById('submitButton').style.display = 'none';
+        } else if (statusProgress === 2) {
+          document.getElementById('section1').style.display = 'none';
+          document.getElementById('section2').style.display = 'block';
+          document.getElementById('backButton').style.display = 'block';
+          document.getElementById('nextButton').style.display = 'none';
+          document.getElementById('submitButton').style.display = 'block';
+        }
+      }
+
+      function fetchSheets() {
+        const url = document.getElementById('spreadsheetUrl').value;
+
+        if (!url) {
+          alert('Please enter a valid spreadsheet URL.');
+          return;
+        }
+
+        // Show the loading indicator
+        const loadingDiv = document.getElementById('loading');
+        loadingDiv.style.display = 'block';
+        loadingDiv.innerHTML = 'Fetching sheet data, please wait...';
+
+        // Call the server-side function and handle the response
+        google.script.run
+          .withSuccessHandler(function(sheetNames) {
+            // Hide the loading indicator
+            loadingDiv.style.display = 'none';
+            
+            // Clear the diffSheetsDiv content
+            const diffSheetsDiv = document.getElementById('diffSheetsDiv');
+            diffSheetsDiv.innerHTML = '';
+
+            // Populate the diffSheetsDiv with the fetched sheet names
+            sheetNames.forEach(function(name) {
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.id = `diff-${name}`;
+              checkbox.value = name;
+              diffSheetsDiv.appendChild(checkbox);
+
+              const label = document.createElement('label');
+              label.htmlFor = `diff-${name}`;
+              label.appendChild(document.createTextNode(name));
+              diffSheetsDiv.appendChild(label);
+
+              diffSheetsDiv.appendChild(document.createElement('br'));
+            });
+          })
+          .withFailureHandler(function(error) {
+            // Hide the loading indicator
+            loadingDiv.style.display = 'none';
+
+            // Show an error message
+            alert('Failed to fetch sheet names: ' + error.message);
+          })
+          .fetchSheetNamesFromUrl(url);
+      }
+
+      function updateProgress() {
+        changeSection();
+
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const progressPercentage = (statusProgress / 2) * 100;
+
+        progressBar.style.width = `${progressPercentage}%`;
+        progressText.textContent = `Step ${statusProgress} of 2`;
+      }
+
       document.addEventListener('DOMContentLoaded', function() {
-        var sheetNames = <!--SHEET_NAMES-->;
-        var sheetsDiv = document.getElementById('sheetsDiv');
-        var mainSheetSelect = document.getElementById('mainSheet');
+        const sheetNames = <!--SHEET_NAMES-->; // Replace with actual sheet names from your Google Sheets
+
+        const sheetsDiv = document.getElementById('sheetsDiv');
+        const mainSheetSelect = document.getElementById('mainSheet');
+        const backButton = document.getElementById('backButton');
+        const nextButton = document.getElementById('nextButton');
 
         sheetNames.forEach(function(name) {
-          var checkbox = document.createElement('input');
+          const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
           checkbox.id = name;
           checkbox.value = name;
           sheetsDiv.appendChild(checkbox);
-          
-          var label = document.createElement('label');
+
+          const label = document.createElement('label');
           label.htmlFor = name;
           label.appendChild(document.createTextNode(name));
           sheetsDiv.appendChild(label);
-          
+
           sheetsDiv.appendChild(document.createElement('br'));
         });
 
         // Update main sheet options when checkboxes are changed
         sheetsDiv.addEventListener('change', function() {
           mainSheetSelect.innerHTML = ''; // Clear previous options
-          var checkboxes = document.querySelectorAll('#sheetsDiv input[type="checkbox"]');
+          const checkboxes = document.querySelectorAll('#sheetsDiv input[type="checkbox"]');
           checkboxes.forEach(function(checkbox) {
             if (checkbox.checked) {
-              var option = document.createElement('option');
+              const option = document.createElement('option');
               option.value = checkbox.value;
               option.text = checkbox.value;
               mainSheetSelect.appendChild(option);
             }
           });
         });
+
+        backButton.addEventListener('click', function() {
+          if (statusProgress > 1) {
+            statusProgress--;
+            updateProgress();
+          }
+        });
+
+        nextButton.addEventListener('click', function() {
+          if (statusProgress < 3) {
+            statusProgress++;
+            updateProgress();
+          }
+        });
       });
 
       function toggleColumnInputs() {
-        var columnOption = document.getElementById('columnOption').value;
-        document.getElementById('rangeInputs').style.display = (columnOption === 'range') ? 'block' : 'none';
-        document.getElementById('specificInputs').style.display = (columnOption === 'specific') ? 'block' : 'none';
+        const columnOption = document.getElementById('columnOption').value;
+        document.getElementById('rangeInputs').style.display = columnOption === 'range' ? 'block' : 'none';
+        document.getElementById('specificInputs').style.display = columnOption === 'specific' ? 'block' : 'none';
       }
 
       function submitSelection() {
         if (processInProgress) return;
 
-        var mainSheet = document.getElementById('mainSheet').value;
-        var selectedSheets = [];
-        var checkboxes = document.querySelectorAll('#sheetsDiv input[type="checkbox"]');
+        const mainSheet = document.getElementById('mainSheet').value;
+        const selectedSheets = [];
+        const checkboxes = document.querySelectorAll('#sheetsDiv input[type="checkbox"]');
         checkboxes.forEach(function(checkbox) {
           if (checkbox.checked) {
             selectedSheets.push(checkbox.value);
           }
         });
-        
-        var action = document.getElementById('action').value;
-        var columnOption = document.getElementById('columnOption').value;
-        var startColumn = document.getElementById('startColumn').value;
-        var endColumn = document.getElementById('endColumn').value;
-        var specificColumns = document.getElementById('specificColumns').value;
+
+        const diffSpreadsheetUrl = document.getElementById('spreadsheetUrl').value;
+        const diffSelectedSheets = [];
+        const diffCheckboxes = document.querySelectorAll('#diffSheetsDiv input[type="checkbox"]');
+        diffCheckboxes.forEach(function(checkbox) {
+          if (checkbox.checked) {
+            diffSelectedSheets.push(checkbox.value);
+          }
+        });
+
+        const action = document.getElementById('action').value;
+        const columnOption = document.getElementById('columnOption').value;
+        const startColumn = document.getElementById('startColumn').value;
+        const endColumn = document.getElementById('endColumn').value;
+        const specificColumns = document.getElementById('specificColumns').value;
 
         // Show the loading indicator and prevent further interaction
+        const loadingDiv = document.getElementById('loading');
         processInProgress = true;
+        loadingDiv.innerHTML = 'Comparison data, please wait...';
         document.getElementById('loading').style.display = 'block';
 
-        google.script.run.withSuccessHandler(function() {
-          // Hide the loading indicator when the process is complete
-          processInProgress = false;
-          document.getElementById('loading').style.display = 'none';
-          google.script.host.close();
-        }).withFailureHandler(function() {
-          // Hide the loading indicator if the process fails
-          processInProgress = false;
-          document.getElementById('loading').style.display = 'none';
-          alert('The process was cancelled or encountered an error.');
-        }).processComparison(mainSheet, selectedSheets, action, columnOption, startColumn, endColumn, specificColumns);
+        google.script.run
+          .withSuccessHandler(function() {
+            // Hide the loading indicator when the process is complete
+            processInProgress = false;
+            document.getElementById('loading').style.display = 'none';
+            google.script.host.close();
+          })
+          .withFailureHandler(function(error) {
+            // Hide the loading indicator if the process fails
+            processInProgress = false;
+            document.getElementById('loading').style.display = 'none';
+            alert('The process was cancelled or encountered an error: ' + error.message);
+          })
+          .processComparison(
+            mainSheet,
+            selectedSheets,
+            action,
+            columnOption,
+            startColumn,
+            endColumn,
+            specificColumns,
+            diffSpreadsheetUrl,
+            diffSelectedSheets
+          );
       }
 
       function cancelProcess() {
@@ -261,5 +443,6 @@
         alert('The process has been cancelled.');
       }
     </script>
+
   </body>
 </html>
