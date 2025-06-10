@@ -47,6 +47,17 @@ function columnLetterToIndex(letter) {
   return column - 1;
 }
 
+function indexToColumnLetter(index) {
+  let letter = '';
+  let column = index + 1; // Convert to 1-based index
+  while (column > 0) {
+    const remainder = (column - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter; // 65 is the char code for 'A'
+    column = Math.floor((column - 1) / 26);
+  }
+  return letter;
+}
+
 function processComparison(mainSheetName, selectedSheets, action, columnOption, startColumn, endColumn, specificColumns, diffSpreadsheetUrl, diffSelectedSheets, comparationOption) {
   if (!mainSheetName) {
     throw new Error('Main sheet name is not provided.');
@@ -60,12 +71,17 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
   }
 
   var mainRange = mainSheet.getDataRange();
-  var mainValues;
+  var mainValues, mainFormulas;
 
   if (comparationOption === 'values') {
     mainValues = mainRange.getValues();
   } else if (comparationOption === 'formulas') {
-    mainValues = mainRange.getFormulas();
+    mainFormulas = mainRange.getFormulas();
+  } else if (comparationOption === 'valuesAndFormulas') {
+    mainValues = mainRange.getValues();
+    mainFormulas = mainRange.getFormulas();
+  } else {
+    throw new Error('Invalid comparison option: ' + comparationOption);
   }
 
   if (mainValues.length === 0) {
@@ -97,7 +113,7 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
       if (!sheet) {
         throw new Error('Sheet not found: ' + sheetName);
       }
-      compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences, comparationOption);
+      compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, columnIndices, action, differences, comparationOption);
     });
 
     // Compare sheets from the provided URL spreadsheet
@@ -108,7 +124,7 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
         if (!sheet) {
           throw new Error('Sheet not found in the provided spreadsheet: ' + sheetName);
         }
-        compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences, comparationOption);
+        compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, columnIndices, action, differences, comparationOption);
       });
     }
 
@@ -134,14 +150,15 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
 }
 
 // Helper function to compare a sheet with the main sheet and highlight differences
-function compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences, comparationOption) {
+function compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, columnIndices, action, differences, comparationOption) {
   var range = sheet.getDataRange();
-  var values;
+  var values, formulas;
 
-  if (comparationOption === 'values'){
+  if (comparationOption === 'values' || comparationOption === 'valuesAndFormulas') {
     values = range.getValues();
-  } else if (comparationOption === 'formulas') {
-    values = range.getFormulas();
+  }
+  if (comparationOption === 'formulas' || comparationOption === 'valuesAndFormulas') {
+    formulas = range.getFormulas();
   }
 
   var maxRows = mainValues.length;
@@ -151,7 +168,9 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, actio
     var rowHasDifference = false;
     columnIndices.forEach(function(col) {
       var mainValue = mainValues[row][col];
-      var compareValue = values[row][col];
+      var compareValue = values ? values[row][col] : null;
+      var mainFormula = mainFormulas[row][col];
+      var compareFormula = formulas ? formulas[row][col] : null;
 
       // Convert dates to strings in a specific format for comparison
       if (mainValue instanceof Date && compareValue instanceof Date) {
@@ -159,46 +178,72 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, actio
         compareValue = Utilities.formatDate(compareValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
       }
 
-      if (mainValue !== compareValue) {
+      var valueDifference = mainValue !== compareValue;
+      var formulaDifference = mainFormula !== compareFormula;
+
+      if (valueDifference || formulaDifference) {
         Logger.log({
           "main value": mainValue,
           "compare value": compareValue,
+          "main formula": mainFormula,
+          "compare formula": compareFormula,
           "row": row,
           "col": col
         });
 
         if (action !== 'summary') {
-          // Highlight the cell in the main sheet
-          mainSheet.getRange(row + 1, col + 1).setBackground('yellow');
+          var cell = mainSheet.getRange(row + 1, col + 1);
+          if (valueDifference && formulaDifference) {
+            cell.setBackground('green'); // Highlight for both value and formula differences
+          } else if (valueDifference) {
+            cell.setBackground('yellow'); // Highlight for value differences
+          } else if (formulaDifference) {
+            cell.setBackground('blue'); // Highlight for formula differences
+          }
         }
-        rowHasDifference = true;
+
+        var status = 'different';
+
+        if (valueDifference && formulaDifference) {
+          status = 'different value and formula';
+        } else if (valueDifference) {
+          status = 'different value';
+        } else if (formulaDifference) {
+          status = 'different formula';
+        }
+
+        differences.push({
+          sheet: sheet.getName(),
+          row: row + 1,
+          col: col + 1,
+          status: status,
+          masterData: mainValues[row][col] || null,
+          data: values[row][col] || null,
+          masterFormulas: mainFormulas[row][col] || null,
+          formulas: formulas[row][col] || null
+        });
       }
     });
-    if (rowHasDifference) {
-      differences.push({
-        sheet: sheet.getName(),
-        row: row + 1,
-        status: 'different',
-        masterData: mainValues[row],
-        data: values[row]
-      });
-    }
   }
 
   // Highlight any additional data below the range of the main sheet
-  if (values.length > maxRows) {
+  if (values && values.length > maxRows) {
     for (var row = maxRows; row < values.length; row++) {
-      differences.push({
-        sheet: sheet.getName(),
-        row: row + 1,
-        status: 'missing',
-        masterData: [],
-        data: values[row]
-      });
       for (var col = 0; col < values[row].length; col++) {
         if (action !== 'summary') {
           mainSheet.getRange(row + 1, col + 1).setBackground('yellow');
         }
+        differences.push({
+          sheet: sheet.getName(),
+          row: row + 1,
+          col: col + 1,
+          status: 'missing data',
+          masterData: mainValues[row][col] || null,
+          data: values[row][col] || null,
+          masterFormulas: mainFormulas[row][col] || null,
+          formulas: formulas[row][col] || null,
+
+        });
       }
     }
   }
@@ -208,34 +253,19 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, actio
 function createSummarySheet(ss, differences, columnIndices) {
   var summarySheet = ss.getSheetByName('Comparison Summary') || ss.insertSheet('Comparison Summary');
   summarySheet.clear();
-  summarySheet.appendRow(['Sheet', 'Status', 'Row', 'Data']);
+  summarySheet.appendRow(['Sheet', 'Status', 'Cell', 'Master Value', 'Compared Value', 'Master Formula', 'Compared Formula']);
 
   differences.forEach(function(diff) {
     var appendData = [
       diff.sheet,
       diff.status,
-      diff.row,
+      indexToColumnLetter(diff.col - 1) + diff.row, // Convert column index to letter
+      diff.masterData !== null && diff.status != 'different formula' ? diff.masterData : '',
+      diff.data !== null && diff.status != 'different formula'? diff.data : '',
+      diff.masterFormulas !== null && diff.status != 'different value' ? "'" + diff.masterFormulas : '',
+      diff.formulas !== null && diff.status != 'different value' ? "'" + diff.formulas : ''
     ];
-    diff.data.forEach(function(cell, index) {
-      var mainValue = diff.masterData[index];
-      var compareValue = cell;
-
-      appendData.push(cell);
-
-      // Convert dates to strings in a specific format for comparison
-      if (mainValue instanceof Date && compareValue instanceof Date) {
-        mainValue = Utilities.formatDate(mainValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-        compareValue = Utilities.formatDate(compareValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-      }
-
-      if (columnIndices.includes(index)) {
-        if (diff.status === 'missing') {
-          summarySheet.getRange(summarySheet.getLastRow() + 1, appendData.length).setBackground('yellow');
-        } else if (mainValue !== compareValue) {
-          summarySheet.getRange(summarySheet.getLastRow() + 1, index + 4).setBackground('yellow');
-        }
-      }
-    });
+    
     summarySheet.appendRow(appendData);
   });
 }
