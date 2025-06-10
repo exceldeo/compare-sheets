@@ -194,9 +194,17 @@
 
       <div class="card" id="section2" style="display: none;">
         <h2>Choose an Action</h2>
+
+        <h3>Choose Action</h3>
         <select id="action">
           <option value="highlight">Highlight Differences</option>
           <option value="summary">Provide Summary</option>
+        </select>
+
+        <h3>Choose Comparation</h3>
+        <select id="comparationOption">
+          <option value="values">Value</option>
+          <option value="formulas">Formula</option>
         </select>
       
         <h3>Choose Columns</h3>
@@ -394,7 +402,12 @@
           }
         });
 
+        if (!mainSheet || selectedSheets.length === 0) {
+          alert('Please select a main sheet and at least one sheet to compare.');
+          return;
+        }
         const action = document.getElementById('action').value;
+        const comparationOption = document.getElementById('comparationOption').value;
         const columnOption = document.getElementById('columnOption').value;
         const startColumn = document.getElementById('startColumn').value;
         const endColumn = document.getElementById('endColumn').value;
@@ -428,7 +441,8 @@
             endColumn,
             specificColumns,
             diffSpreadsheetUrl,
-            diffSelectedSheets
+            diffSelectedSheets,
+            comparationOption
           );
       }
 

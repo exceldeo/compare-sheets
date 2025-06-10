@@ -47,7 +47,7 @@ function columnLetterToIndex(letter) {
   return column - 1;
 }
 
-function processComparison(mainSheetName, selectedSheets, action, columnOption, startColumn, endColumn, specificColumns, diffSpreadsheetUrl, diffSelectedSheets) {
+function processComparison(mainSheetName, selectedSheets, action, columnOption, startColumn, endColumn, specificColumns, diffSpreadsheetUrl, diffSelectedSheets, comparationOption) {
   if (!mainSheetName) {
     throw new Error('Main sheet name is not provided.');
   }
@@ -60,7 +60,14 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
   }
 
   var mainRange = mainSheet.getDataRange();
-  var mainValues = mainRange.getValues();
+  var mainValues;
+
+  if (comparationOption === 'values') {
+    mainValues = mainRange.getValues();
+  } else if (comparationOption === 'formulas') {
+    mainValues = mainRange.getFormulas();
+  }
+
   if (mainValues.length === 0) {
     throw new Error('Main sheet is empty: ' + mainSheetName);
   }
@@ -90,7 +97,7 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
       if (!sheet) {
         throw new Error('Sheet not found: ' + sheetName);
       }
-      compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences);
+      compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences, comparationOption);
     });
 
     // Compare sheets from the provided URL spreadsheet
@@ -101,7 +108,7 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
         if (!sheet) {
           throw new Error('Sheet not found in the provided spreadsheet: ' + sheetName);
         }
-        compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences);
+        compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences, comparationOption);
       });
     }
 
@@ -127,9 +134,15 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
 }
 
 // Helper function to compare a sheet with the main sheet and highlight differences
-function compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences) {
+function compareSheetWithMain(sheet, mainSheet, mainValues, columnIndices, action, differences, comparationOption) {
   var range = sheet.getDataRange();
-  var values = range.getValues();
+  var values;
+
+  if (comparationOption === 'values'){
+    values = range.getValues();
+  } else if (comparationOption === 'formulas') {
+    values = range.getFormulas();
+  }
 
   var maxRows = mainValues.length;
 
