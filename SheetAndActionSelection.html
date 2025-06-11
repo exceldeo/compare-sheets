@@ -18,9 +18,8 @@
         font-size: 12px; /* Reduced font size */
       }
       select {
-        width: calc(100% - 20px);
+        width: calc(100%);
         padding: 10px;
-        margin-bottom: 20px;
         border: 1px solid #ccc;
         border-radius: 5px;
         background-color: #fff;
@@ -170,7 +169,7 @@
       </div>
 
       <div class="card" id="section1">
-        <h2>Data Compare</h2>
+        <h2>Data Comparation</h2>
 
         <div id="section2DifferenceSpreadheet">
           <h3>To compare with a different spreadsheet, please provide the URL:</h3>
@@ -193,7 +192,7 @@
       </div>
 
       <div class="card" id="section2" style="display: none;">
-        <h2>Choose an Action</h2>
+        <h2>Action Comparation</h2>
 
         <h3>Choose Action</h3>
         <select id="action">
@@ -207,6 +206,11 @@
           <option value="formulas">Formula</option>
           <option value="valuesAndFormulas">Value and Formula</option>
         </select>
+        <i>
+          difference value highlighted in <span style="font-weight:bold;">yellow</span>, 
+          difference formula highlighted in <span style="font-weight:bold;">blue</span>, and 
+          difference value and formula highlighted in <span style="font-weight:bold;">green</span>.
+        </i>
       
         <h3>Choose Columns</h3>
         <select id="columnOption" onchange="toggleColumnInputs()">

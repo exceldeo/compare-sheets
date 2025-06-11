@@ -75,23 +75,36 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
 
   if (comparationOption === 'values') {
     mainValues = mainRange.getValues();
+    if (mainValues.length === 0) {
+      throw new Error('Main sheet is empty.');
+    }
   } else if (comparationOption === 'formulas') {
     mainFormulas = mainRange.getFormulas();
+    if (mainFormulas.length === 0) {
+      throw new Error('Main sheet is empty.');
+    }
   } else if (comparationOption === 'valuesAndFormulas') {
     mainValues = mainRange.getValues();
     mainFormulas = mainRange.getFormulas();
+    if (mainValues.length === 0 && mainFormulas.length === 0) {
+      throw new Error('Main sheet is empty.');
+    }
   } else {
     throw new Error('Invalid comparison option: ' + comparationOption);
-  }
-
-  if (mainValues.length === 0) {
-    throw new Error('Main sheet is empty: ' + mainSheetName);
   }
 
   var columnIndices = [];
 
   if (columnOption === 'all') {
-    columnIndices = Array.from({ length: mainValues[0].length }, (v, k) => k);
+    columnIndices = [];
+    if (comparationOption === 'formulas') {
+      columnIndices = Array.from({ length: mainFormulas[0].length }, (v, k) => k);
+    } else if (comparationOption === 'values') {
+      columnIndices = Array.from({ length: mainValues[0].length }, (v, k) => k);
+    } else if (comparationOption === 'valuesAndFormulas') {
+      var maxLength = Math.max(mainValues[0].length, mainFormulas[0].length);
+      columnIndices = Array.from({ length: maxLength }, (v, k) => k);
+    }
   } else if (columnOption === 'range') {
     var start = columnLetterToIndex(startColumn);
     var end = columnLetterToIndex(endColumn);
@@ -161,15 +174,30 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, column
     formulas = range.getFormulas();
   }
 
-  var maxRows = mainValues.length;
+  var maxRows = 0;
+    if (mainValues && mainValues.length > 0) {
+    maxRows = Math.max(maxRows, mainValues.length);
+  }
+
+  if (mainFormulas && mainFormulas.length > 0) {
+    maxRows = Math.max(maxRows, mainFormulas.length);
+  }
+
+  var maxRowsDiff = 0;
+  if (values && values.length > 0) {
+    maxRowsDiff = Math.max(maxRowsDiff, values.length);
+  }
+  if (formulas && formulas.length > 0) {
+    maxRowsDiff = Math.max(maxRowsDiff, formulas.length);
+  }
 
   // Compare the two ranges
-  for (var row = 0; row < maxRows && row < values.length; row++) {
+  for (var row = 0; row < maxRows && row < maxRowsDiff; row++) {
     var rowHasDifference = false;
     columnIndices.forEach(function(col) {
-      var mainValue = mainValues[row][col];
+      var mainValue = mainValues ? mainValues[row][col] : null;
       var compareValue = values ? values[row][col] : null;
-      var mainFormula = mainFormulas[row][col];
+      var mainFormula = mainFormulas ? mainFormulas[row][col] : null; // Add null check
       var compareFormula = formulas ? formulas[row][col] : null;
 
       // Convert dates to strings in a specific format for comparison
@@ -217,10 +245,10 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, column
           row: row + 1,
           col: col + 1,
           status: status,
-          masterData: mainValues[row][col] || null,
-          data: values[row][col] || null,
-          masterFormulas: mainFormulas[row][col] || null,
-          formulas: formulas[row][col] || null
+          masterData: mainValues ? mainValues[row][col] : null,
+          data: values ? values[row][col] : null,
+          masterFormulas: mainFormulas ? mainFormulas[row][col] : null,
+          formulas: formulas ? formulas[row][col] : null
         });
       }
     });
@@ -238,10 +266,10 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, column
           row: row + 1,
           col: col + 1,
           status: 'missing data',
-          masterData: mainValues[row][col] || null,
-          data: values[row][col] || null,
-          masterFormulas: mainFormulas[row][col] || null,
-          formulas: formulas[row][col] || null,
+          masterData: mainValues ? mainValues[row][col] : null,
+          data: values ? values[row][col] : null,
+          masterFormulas: mainFormulas ? mainFormulas[row][col] : null,
+          formulas: formulas ? formulas[row][col] : null
 
         });
       }
@@ -261,9 +289,9 @@ function createSummarySheet(ss, differences, columnIndices) {
       diff.status,
       indexToColumnLetter(diff.col - 1) + diff.row, // Convert column index to letter
       diff.masterData !== null && diff.status != 'different formula' ? diff.masterData : '',
-      diff.data !== null && diff.status != 'different formula'? diff.data : '',
-      diff.masterFormulas !== null && diff.status != 'different value' ? "'" + diff.masterFormulas : '',
-      diff.formulas !== null && diff.status != 'different value' ? "'" + diff.formulas : ''
+      diff.data !== null && diff.status != 'different formula' ? diff.data : '',
+      diff.masterFormulas !== null && diff.status != 'different value' & diff.status != 'missing data' ? "'" + diff.masterFormulas : '',
+      diff.formulas !== null && diff.status != 'different value' & diff.status != 'missing data' ? "'" + diff.formulas : ''
     ];
     
     summarySheet.appendRow(appendData);
