@@ -31,11 +31,15 @@ You may be prompted to authorize the add-on to access your Google Sheets. Click 
     4. Choose Action:
         a. Highlight Differences: This option will highlight the differences between the main sheet and the selected sheet.
         b. Provide Summary: This option will create a summary sheet that shows the differences. The summary sheet can be created automatically or you can clear existing data.
-    5. Choose Columns:
+    5. Choose the type of comparison:
+        a. Compare Values: This option will compare the values in the cells.
+        b. Compare Formulas: This option will compare the formulas in the cells.
+        c. Compare Both: This option will compare both values and formulas.
+    6. Choose Columns:
         a. All Columns: Compare all columns to find differences.
         b. Range of Columns: Input the start and end columns you want to compare.
         c. Specific Columns: Compare specific columns by entering them as a comma-separated list.
-    6. Click Submit and Wait.
+    7. Click Submit and Wait.
 
 ## Sceeenshoot
 ![image-1](./screenshoot/image-1.png)
@@ -47,4 +51,6 @@ You may be prompted to authorize the add-on to access your Google Sheets. Click 
 
 ## Notes
     1. Differences in non-main sheets will be highlighted with a yellow background.
-    s2. Provide Summary will create new sheet, name is "comparison summary"
+    2. Provide Summary will create new sheet, name is "comparison summary"
+    3. Highlight Yellow will be applied to the cells that are different value,
+    highlight Blue will be applied to the cells that are different formula, and highlight Green will be applied to the cells that are different value and formula.

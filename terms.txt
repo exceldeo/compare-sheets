@@ -1,0 +1,28 @@
+Terms of Service
+1. Acceptance of Terms
+By installing and using the Compare Sheets extension ("the Service"), you agree to be bound by these Terms of Service.
+
+2. Description of the Service
+The Service enables users to compare data across Google Sheets to highlight differences in values and formulas.
+
+3. License to Use
+You are granted a limited, non-exclusive right to use the Service pursuant to these terms.
+
+4. User Responsibilities
+You are responsible for any data you upload or process using the Service and ensuring compliance with all applicable laws.
+
+5. Prohibited Uses
+You may not use the Service to upload or transmit harmful, offensive, or unauthorized content.
+
+6. Modifications
+The Service may be modified, suspended, or discontinued at any time without notice.
+
+7. Limitation of Liability
+The developers are not liable for any damages resulting from the use or inability to use the Service.
+
+8. Governing Law
+These Terms are governed by applicable laws of your jurisdiction.
+
+9. Contact
+For questions about these Terms, contact the developers via the provided contact channels.
+

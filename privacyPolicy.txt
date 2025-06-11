@@ -1,0 +1,25 @@
+Privacy Policy
+1. Information Collection
+The Service does not collect personal data from users beyond what is necessary to provide the functionality of comparing spreadsheet data.
+
+2. Use of Data
+Data processed through the Service is used solely to perform comparisons and is not stored beyond the session unless otherwise specified.
+
+3. Data Sharing
+Your data will not be shared with third parties except as required by law.
+
+4. Data Security
+Reasonable security measures are in place to protect your data.
+
+5. Cookies and Tracking
+The Service does not use cookies or tracking technologies.
+
+6. Children's Privacy
+The Service is not intended for children under 13.
+
+7. Updates to Privacy Policy
+This policy may be updated periodically. Continued use of the Service constitutes acceptance of changes.
+
+8. Contact
+For privacy inquiries, contact the developers through the provided contact points.
+
