@@ -206,8 +206,8 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, column
         compareValue = Utilities.formatDate(compareValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
       }
 
-      var valueDifference = mainValue !== compareValue;
-      var formulaDifference = mainFormula !== compareFormula;
+      var valueDifference = (mainValue !== compareValue) && !(mainValue == null && compareValue === "") && !(mainValue === "" && compareValue == null);
+      var formulaDifference = (mainFormula !== compareFormula) && !(mainFormula == null && compareFormula === "") && !(mainFormula === "" && compareFormula == null);
 
       if (valueDifference || formulaDifference) {
         Logger.log({
