@@ -123,7 +123,6 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
     // Compare sheets from the active spreadsheet
     selectedSheets.forEach(function(sheetName) {
       var sheet = ss.getSheetByName(sheetName);
-      Logger.log("compare sheet :"+sheetName + " mainSheet :" + mainSheetName)
       if (!sheet) {
         throw new Error('Sheet not found: ' + sheetName);
       }
@@ -132,7 +131,6 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
 
     // Compare sheets from the provided URL spreadsheet
     if (diffSpreadsheetUrl && diffSelectedSheets.length > 0) {
-      Logger.log("diffSpreadsheetUrl")
       var diffSpreadsheet = SpreadsheetApp.openByUrl(diffSpreadsheetUrl);
       diffSelectedSheets.forEach(function(sheetName) {
         var sheet = diffSpreadsheet.getSheetByName(sheetName);
@@ -168,186 +166,117 @@ function processComparison(mainSheetName, selectedSheets, action, columnOption, 
 // Helper function to compare a sheet with the main sheet and highlight differences
 function compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, columnIndices, action, differences, comparationOption) {
   Logger.log({
-    "comparationOption": comparationOption,
-    "mainSheet": sheet.getName(),
+    comparationOption: comparationOption,
+    mainSheet: mainSheet.getName(),
+    sheet: sheet.getName()
   });
 
-  var range = sheet.getDataRange();
-  var values, formulas;
+  const range = sheet.getDataRange();
+  const values = (comparationOption === 'values' || comparationOption === 'valuesAndFormulas') ? range.getValues() : null;
+  const formulas = (comparationOption === 'formulas' || comparationOption === 'valuesAndFormulas') ? range.getFormulas() : null;
 
-  if (comparationOption === 'values' || comparationOption === 'valuesAndFormulas') {
-    values = range.getValues();
-  }
-  if (comparationOption === 'formulas' || comparationOption === 'valuesAndFormulas') {
-    formulas = range.getFormulas();
-  }
+  const maxRows = Math.max(mainValues?.length || 0, mainFormulas?.length || 0);
+  const maxRowsDiff = Math.max(values?.length || 0, formulas?.length || 0);
 
-  var maxRows = 0;
-    if (mainValues && mainValues.length > 0) {
-    maxRows = Math.max(maxRows, mainValues.length);
-  }
+  Logger.log({ maxRows, maxRowsDiff });
 
-  if (mainFormulas && mainFormulas.length > 0) {
-    maxRows = Math.max(maxRows, mainFormulas.length);
-  }
-
-  var maxRowsDiff = 0;
-  if (values && values.length > 0) {
-    maxRowsDiff = Math.max(maxRowsDiff, values.length);
-  }
-  if (formulas && formulas.length > 0) {
-    maxRowsDiff = Math.max(maxRowsDiff, formulas.length);
-  }
-
-  // Compare the two ranges
-  for (var row = 0; row < Math.max(maxRows, maxRowsDiff); row++) {
-    if (row >= (mainValues ? mainValues.length : 0) || row >= (values ? values.length : 0)) {
-      Logger.log('Skipping row ' + row + ' as it is out of bounds.');
-      continue;
+  // Helper function to handle highlighting and logging differences
+  function handleDifference(row, col, status, mainValue, compareValue, mainFormula, compareFormula) {
+    if (action !== 'summary') {
+      const cell = mainSheet.getRange(row + 1, col + 1);
+      if (status === 'different value and formula') {
+        cell.setBackground('green');
+      } else if (status === 'different value') {
+        cell.setBackground('yellow');
+      } else if (status === 'different formula') {
+        cell.setBackground('blue');
+      }
     }
-    var mainRowExists = row < (mainValues ? mainValues.length : 0);
-    var compareRowExists = row < (values ? values.length : 0);
-    
-    columnIndices.forEach(function(col) {
-      if (col >= (mainValues ? mainValues[0].length : 0) || col >= (values ? values[0].length : 0)) {
-        Logger.log('Skipping column ' + col + ' as it is out of bounds.');
-        return;
-      }
-      
-      var mainValue = mainRowExists && mainValues[row] && col < mainValues[row].length ? mainValues[row][col] : null;
-      var compareValue = compareRowExists && values[row] && col < values[row].length ? values[row][col] : null;
-      var mainFormula = mainRowExists && mainFormulas && mainFormulas[row] && col < mainFormulas[row].length ? mainFormulas[row][col] : null;
-      var compareFormula = compareRowExists && formulas && formulas[row] && col < formulas[row].length ? formulas[row][col] : null;
 
-      // Skip if both mainValue and compareValue are null
-      if (mainValue === null && compareValue === null && mainFormula === null && compareFormula === null) {
-        return;
-      }
+    differences.push({
+      sheet: sheet.getName(),
+      row: row + 1,
+      col: col + 1,
+      status,
+      masterData: mainValue,
+      data: compareValue,
+      masterFormulas: mainFormula,
+      formulas: compareFormula,
+    });
+  }
 
-      // Convert dates to strings in a specific format for comparison
+  // Compare rows and columns
+  for (let row = 0; row < Math.max(maxRows, maxRowsDiff); row++) {
+    const mainRowExists = row < (mainValues?.length || 0);
+    const compareRowExists = row < (values?.length || 0);
+
+    if (!mainRowExists && !compareRowExists) continue;
+
+    columnIndices.forEach((col) => {
+      const mainValue = mainRowExists ? mainValues[row]?.[col] : null;
+      const compareValue = compareRowExists ? values[row]?.[col] : null;
+      const mainFormula = mainRowExists ? mainFormulas?.[row]?.[col] : null;
+      const compareFormula = compareRowExists ? formulas?.[row]?.[col] : null;
+
+      // Skip if both values and formulas are null
+      if (!mainValue && !compareValue && !mainFormula && !compareFormula) return;
+
+      // Convert dates to strings for comparison
       if (mainValue instanceof Date && compareValue instanceof Date) {
         mainValue = Utilities.formatDate(mainValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
         compareValue = Utilities.formatDate(compareValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
       }
 
-      var valueDifference = (mainValue !== compareValue) && !(mainValue == null && compareValue === "") && !(mainValue === "" && compareValue == null);
-      var formulaDifference = (mainFormula !== compareFormula) && !(mainFormula == null && compareFormula === "") && !(mainFormula === "" && compareFormula == null);
+      const valueDifference = mainValue !== compareValue && !(mainValue == null && compareValue === "") && !(mainValue === "" && compareValue == null);
+      const formulaDifference = mainFormula !== compareFormula && !(mainFormula == null && compareFormula === "") && !(mainFormula === "" && compareFormula == null);
 
       if (valueDifference || formulaDifference) {
-        Logger.log({
-          "main value": mainValue,
-          "compare value": compareValue,
-          "main formula": mainFormula,
-          "compare formula": compareFormula,
-          "row": row,
-          "col": col
-        });
+        const status = valueDifference && formulaDifference
+          ? 'different value and formula'
+          : valueDifference
+          ? 'different value'
+          : 'different formula';
+
+        handleDifference(row, col, status, mainValue, compareValue, mainFormula, compareFormula);
+      }
+    });
+  }
+
+  // Handle extra rows in the comparison sheet
+  function highlightExtraRows(extraData, startRow, status) {
+    for (let row = startRow; row < extraData.length; row++) {
+      if (!extraData[row]) continue;
+
+      columnIndices.forEach((col) => {
+        if (col >= extraData[0].length) return;
 
         if (action !== 'summary') {
-          var cell = mainSheet.getRange(row + 1, col + 1);
-          if (valueDifference && formulaDifference) {
-            cell.setBackground('green'); // Highlight for both value and formula differences
-          } else if (valueDifference) {
-            cell.setBackground('yellow'); // Highlight for value differences
-          } else if (formulaDifference) {
-            cell.setBackground('blue'); // Highlight for formula differences
-          }
-        }
-
-        var status = 'different';
-
-        if (valueDifference && formulaDifference) {
-          status = 'different value and formula';
-        } else if (valueDifference) {
-          status = 'different value';
-        } else if (formulaDifference) {
-          status = 'different formula';
+          mainSheet.getRange(row + 1, col + 1).setBackground('yellow');
         }
 
         differences.push({
           sheet: sheet.getName(),
           row: row + 1,
           col: col + 1,
-          status: status,
-          masterData: mainValues ? mainValues[row][col] : null,
-          data: values ? values[row][col] : null,
-          masterFormulas: mainFormulas ? mainFormulas[row][col] : null,
-          formulas: formulas ? formulas[row][col] : null
+          status,
+          masterData: mainValues?.[row]?.[col] || null,
+          data: values?.[row]?.[col] || null,
+          masterFormulas: mainFormulas?.[row]?.[col] || null,
+          formulas: formulas?.[row]?.[col] || null,
         });
-      }
-    });
+      });
+    }
   }
 
   if (comparationOption === 'values' || comparationOption === 'valuesAndFormulas') {
-    // Highlight any additional data below the range of the main sheet
-    if (values && values.length > maxRows) {
-      for (var row = maxRows; row < values.length; row++) {
-        // Ensure the row exists and is not undefined
-        if (!values[row]) {
-          Logger.log('Skipping row ' + row + ' because it is undefined.');
-          continue;
-        }
-
-        columnIndices.forEach(function(col) {
-          if (col >= (values ? values[0].length : 0)) {
-            Logger.log('Skipping column ' + col + ' as it is out of bounds.');
-            return;
-          }
-
-          if (action !== 'summary') {
-            mainSheet.getRange(row + 1, col + 1).setBackground('yellow');
-          }
-
-          differences.push({
-            sheet: sheet.getName(),
-            row: row + 1,
-            col: col + 1,
-            status: 'missing data',
-            masterData: mainValues && mainValues[row] ? mainValues[row][col] : null,
-            data: values && values[row] ? values[row][col] : null,
-            masterFormulas: mainFormulas && mainFormulas[row] ? mainFormulas[row][col] : null,
-            formulas: formulas && formulas[row] ? formulas[row][col] : null
-          });
-        })
-      }
-    }
+    if (values?.length > maxRows) highlightExtraRows(values, maxRows, 'missing data');
   }
+
   if (comparationOption === 'formulas' || comparationOption === 'valuesAndFormulas') {
-    // Highlight any additional data below the range of the main sheet
-    if (formulas && formulas.length > maxRows) {
-      for (var row = maxRows; row < formulas.length; row++) {
-        // Ensure the row exists and is not undefined
-        if (!formulas[row]) {
-          Logger.log('Skipping row ' + row + ' because it is undefined.');
-          continue;
-        }
-
-        columnIndices.forEach(function(col) {
-          if (col >= (formulas ? formulas[0].length : 0)) {
-            Logger.log('Skipping column ' + col + ' as it is out of bounds.');
-            return;
-          }
-
-          if (action !== 'summary') {
-            mainSheet.getRange(row + 1, col + 1).setBackground('yellow');
-          }
-
-          differences.push({
-            sheet: sheet.getName(),
-            row: row + 1,
-            col: col + 1,
-            status: 'missing formula',
-            masterData: mainValues && mainValues[row] ? mainValues[row][col] : null,
-            data: values && values[row] ? values[row][col] : null,
-            masterFormulas: mainFormulas && mainFormulas[row] ? mainFormulas[row][col] : null,
-            formulas: formulas && formulas[row] ? formulas[row][col] : null
-          });
-        })
-      }
-    }
+    if (formulas?.length > maxRows) highlightExtraRows(formulas, maxRows, 'missing formula');
   }
-  
 }
+
 
 // Helper function to create a summary sheet
 function createSummarySheet(ss, differences, columnIndices) {
