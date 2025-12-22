@@ -213,10 +213,10 @@ function compareSheetWithMain(sheet, mainSheet, mainValues, mainFormulas, column
     if (!mainRowExists && !compareRowExists) continue;
 
     columnIndices.forEach((col) => {
-      const mainValue = mainRowExists ? mainValues[row]?.[col] : null;
-      const compareValue = compareRowExists ? values[row]?.[col] : null;
-      const mainFormula = mainRowExists ? mainFormulas?.[row]?.[col] : null;
-      const compareFormula = compareRowExists ? formulas?.[row]?.[col] : null;
+      let mainValue = mainRowExists ? mainValues[row]?.[col] : null;
+      let compareValue = compareRowExists ? values[row]?.[col] : null;
+      let mainFormula = mainRowExists ? mainFormulas?.[row]?.[col] : null;
+      let compareFormula = compareRowExists ? formulas?.[row]?.[col] : null;
 
       // Skip if both values and formulas are null
       if (!mainValue && !compareValue && !mainFormula && !compareFormula) return;
